@@ -1,27 +1,27 @@
-const mostBlogs = (blogs) => {
+const mostLikes = (blogs) => {
     if (blogs.length === 0) {
       return null;
     }
   
-    const authorCounts = blogs.reduce((authorCounts, blog) => {
-      if (!authorCounts[blog.author]) {
-        authorCounts[blog.author] = 1;
+    const authorLikes = blogs.reduce((authorLikes, blog) => {
+      if (!authorLikes[blog.author]) {
+        authorLikes[blog.author] = blog.likes;
       } else {
-        authorCounts[blog.author]++;
+        authorLikes[blog.author] += blog.likes;
       }
-      return authorCounts;
+      return authorLikes;
     }, {});
   
-    const mostProlificAuthor = Object.keys(authorCounts)
+    const mostLikedAuthor = Object.keys(authorLikes)
       .reduce((maxAuthor, currentAuthor) => {
-        return authorCounts[maxAuthor] < authorCounts[currentAuthor]
+        return authorLikes[maxAuthor] < authorLikes[currentAuthor]
           ? currentAuthor
           : maxAuthor;
-      }, Object.keys(authorCounts)[0]);
+      }, Object.keys(authorLikes)[0]);
   
     return {
-      author: mostProlificAuthor,
-      blogs: authorCounts[mostProlificAuthor]
+      author: mostLikedAuthor,
+      likes: authorLikes[mostLikedAuthor]
     };
   };
   
@@ -29,6 +29,7 @@ const mostBlogs = (blogs) => {
     dummy,
     totalLikes,
     favoriteBlog,
-    mostBlogs
+    mostBlogs,
+    mostLikes
   };
   

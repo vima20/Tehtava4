@@ -1,4 +1,4 @@
-describe('most blogs', () => {
+describe('most likes', () => {
     const listWithOneBlog = [
       {
         _id: '5a422aa71b54a676234d17f8',
@@ -11,9 +11,9 @@ describe('most blogs', () => {
     ];
   
     test('when list has only one blog, returns that author', () => {
-      const result = listHelper.mostBlogs(listWithOneBlog);
+      const result = listHelper.mostLikes(listWithOneBlog);
       assert.strictEqual(result.author, 'Edsger W. Dijkstra');
-      assert.strictEqual(result.blogs, 1);
+      assert.strictEqual(result.likes, 5);
     });
   
     const listWithMultipleAuthors = [
@@ -24,14 +24,14 @@ describe('most blogs', () => {
       { _id: '5', title: 'blog 5', author: 'author 2', likes: 1 }
     ];
   
-    test('when list has multiple authors, returns the most prolific one', () => {
-      const result = listHelper.mostBlogs(listWithMultipleAuthors);
-      assert.strictEqual(result.author, 'author 1');
-      assert.strictEqual(result.blogs, 2);
+    test('when list has multiple authors, returns the author with the most likes', () => {
+      const result = listHelper.mostLikes(listWithMultipleAuthors);
+      assert.strictEqual(result.author, 'author 2');
+      assert.strictEqual(result.likes, 8);
     });
   
     test('when list is empty, returns null', () => {
-      const result = listHelper.mostBlogs([]);
+      const result = listHelper.mostLikes([]);
       assert.strictEqual(result, null);
     });
   });
