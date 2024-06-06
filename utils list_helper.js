@@ -1,18 +1,34 @@
-const favoriteBlog = (blogs) => {
+const mostBlogs = (blogs) => {
     if (blogs.length === 0) {
       return null;
     }
   
-    const mostLikedBlog = blogs.reduce((maxLiked, currentBlog) => {
-      return currentBlog.likes > maxLiked.likes ? currentBlog : maxLiked;
-    }, blogs[0]);
+    const authorCounts = blogs.reduce((authorCounts, blog) => {
+      if (!authorCounts[blog.author]) {
+        authorCounts[blog.author] = 1;
+      } else {
+        authorCounts[blog.author]++;
+      }
+      return authorCounts;
+    }, {});
   
-    return mostLikedBlog;
+    const mostProlificAuthor = Object.keys(authorCounts)
+      .reduce((maxAuthor, currentAuthor) => {
+        return authorCounts[maxAuthor] < authorCounts[currentAuthor]
+          ? currentAuthor
+          : maxAuthor;
+      }, Object.keys(authorCounts)[0]);
+  
+    return {
+      author: mostProlificAuthor,
+      blogs: authorCounts[mostProlificAuthor]
+    };
   };
   
   module.exports = {
     dummy,
     totalLikes,
-    favoriteBlog
+    favoriteBlog,
+    mostBlogs
   };
   
