@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const mongoose = require('mongoose')
-
+const blogsRouter = require('./src/api/blogsRouter');
 const blogSchema = mongoose.Schema({
   title: String,
   author: String,
@@ -17,6 +17,7 @@ mongoose.connect(mongoUrl)
 
 app.use(cors())
 app.use(express.json())
+app.use('/api/blogs', blogsRouter);
 
 app.get('/api/blogs', (request, response) => {
   Blog
