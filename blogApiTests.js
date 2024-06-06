@@ -6,5 +6,6 @@ test('GET /api/blogs returns the correct number of blogs', async () => {
     }
   
     expect(response.body.length).toBeGreaterThan(0);
+    expect(response.body[0].id).toBeDefined(); // Check for 'id' property
   });
   
