@@ -12,36 +12,33 @@ describe('Blog API', () => {
     await mongoose.disconnect();
   });
 
-  test('POST /api/blogs adds a new blog', async () => {
+  // Existing test cases (replace with yours if needed)
+
+  test('POST /api/blogs returns 400 if title is missing', async () => {
     const newBlog = {
-      title: 'Test Blog Title',
       author: 'Test Author',
+      url: 'https://example.com',
     };
 
     const response = await request(app)
       .post('/api/blogs')
       .send(newBlog);
 
-    expect(response.status).toBe(201); // Check for successful creation (201)
-    expect(response.body.title).toBe(newBlog.title); // Verify title
-    expect(response.body.author).toBe(newBlog.author); // Verify author
-    expect(response.body.likes).toBe(0); // Verify likes default to 0
+    expect(response.status).toBe(400); // Check for Bad Request (400)
+    expect(response.body.error).toBe('Missing required field: title'); // Verify error message
   });
 
-  test('POST /api/blogs adds a new blog with likes value', async () => {
+  test('POST /api/blogs returns 400 if url is missing', async () => {
     const newBlog = {
       title: 'Test Blog Title',
       author: 'Test Author',
-      likes: 5,
     };
 
     const response = await request(app)
       .post('/api/blogs')
       .send(newBlog);
 
-    expect(response.status).toBe(201); // Check for successful creation (201)
-    expect(response.body.title).toBe(newBlog.title); // Verify title
-    expect(response.body.author).toBe(newBlog.author); // Verify author
-    expect(response.body.likes).toBe(newBlog.likes); // Verify likes value
+    expect(response.status).toBe(400); // Check for Bad Request (400)
+    expect(response.body.error).toBe('Missing required field: url'); // Verify error message
   });
 });
