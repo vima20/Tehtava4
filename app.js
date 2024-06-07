@@ -20,21 +20,32 @@ const Blog = mongoose.model('Blog', blogSchema);
 // POST route handler for adding blogs (replace with your existing handler)
 // ... (your existing POST route handler for adding blogs)
 
-// DELETE route handler for deleting a blog
-app.delete('/api/blogs/:id', async (req, res) => {
+// DELETE route handler for deleting a blog (replace with your existing handler)
+// ... (your existing DELETE route handler for deleting a blog)
+
+// PUT route handler for updating a blog
+app.put('/api/blogs/:id', async (req, res) => {
   try {
     const blogId = req.params.id; // Get blog ID from URL parameter
-    const deletedBlog = await Blog.findByIdAndDelete(blogId); // Find and delete blog
-    if (!deletedBlog) {
+    const updatedBlog = req.body; // Get updated blog data from request body
+
+    // Find the blog to update
+    const blogToUpdate = await Blog.findByIdAndUpdate(
+      blogId,
+      updatedBlog,
+      { new: true } // Return the updated document
+    );
+
+    if (!blogToUpdate) {
       // Blog not found
       res.status(404).json({ error: 'Blog not found' });
       return;
     }
 
-    res.status(200).json({ message: 'Blog deleted successfully' });
+    res.status(200).json(blogToUpdate); // Send the updated blog
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to delete blog' });
+    res.status(500).json({ error: 'Failed to update blog' });
   }
 });
 

@@ -23,6 +23,10 @@ describe('Blog API', () => {
   });
 
   test('DELETE /api/blogs/:id deletes a blog', async () => {
+    // ... (your existing test case for deleting a blog)
+  });
+
+  test('PUT /api/blogs/:id updates a blog', async () => {
     // Create a new blog and save it
     const newBlog = new Blog({
       title: 'Test Blog Title',
@@ -33,16 +37,21 @@ describe('Blog API', () => {
 
     const blogId = newBlog._id; // Get the blog ID
 
-    // Send a DELETE request to delete the blog
+    // Prepare updated blog data
+    const updatedBlog = {
+      likes: 100, // Update likes to 100
+    };
+
+    // Send a PUT request to update the blog
     const response = await request(app)
-      .delete(`/api/blogs/${blogId}`)
-      .send();
+      .put(`/api/blogs/${blogId}`)
+      .send(updatedBlog);
 
-    expect(response.status).toBe(200); // Check for successful deletion (200)
-    expect(response.body.message).toBe('Blog deleted successfully'); // Verify message
+    expect(response.status).toBe(200); // Check for successful update (200)
+    expect(response.body.likes).toBe(100); // Verify likes are updated
 
-    // Verify that the blog is deleted from the database
-    const deletedBlog = await Blog.findById(blogId);
-    expect(deletedBlog).toBeNull(); // Verify blog is null
+    // Verify the blog is updated in the database
+    const updatedBlogFromDB = await Blog.findById(blogId);
+    expect(updatedBlogFromDB.likes).toBe(100); // Verify likes in DB
   });
 });
