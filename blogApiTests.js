@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('./app'); // Replace with path to your app file
 const mongoose = require('mongoose');
 
-describe('Blog API', () => {
+describe('User API', () => {
   beforeEach(async () => {
     await mongoose.connect('mongodb://localhost:27017/test-database'); // Replace with your DB connection string
   });
@@ -14,44 +14,53 @@ describe('Blog API', () => {
 
   // Existing test cases (replace with yours if needed)
 
-  test('POST /api/blogs adds a new blog', async () => {
-    // ... (your existing test case for adding a blog)
-  });
-
-  test('POST /api/blogs adds a new blog with likes value', async () => {
-    // ... (your existing test case for adding a blog with likes)
-  });
-
-  test('DELETE /api/blogs/:id deletes a blog', async () => {
-    // ... (your existing test case for deleting a blog)
-  });
-
-  test('PUT /api/blogs/:id updates a blog', async () => {
-    // Create a new blog and save it
-    const newBlog = new Blog({
-      title: 'Test Blog Title',
-      author: 'Test Author',
-      url: 'https://example.com',
-    });
-    await newBlog.save();
-
-    const blogId = newBlog._id; // Get the blog ID
-
-    // Prepare updated blog data
-    const updatedBlog = {
-      likes: 100, // Update likes to 100
+  test('POST /api/users creates a new user', async () => {
+    const newUser = {
+      username: 'testuser',
+      password: 'password123',
+      name: 'Test User',
     };
 
-    // Send a PUT request to update the blog
     const response = await request(app)
-      .put(`/api/blogs/${blogId}`)
-      .send(updatedBlog);
+      .post('/api/users')
+      .send(newUser);
 
-    expect(response.status).toBe(200); // Check for successful update (200)
-    expect(response.body.likes).toBe(100); // Verify likes are updated
+    expect(response.status).toBe(201); // Check for successful creation (201)
+    expect(response.body.message).toBe('User created successfully');
+  });
 
-    // Verify the blog is updated in the database
-    const updatedBlogFromDB = await Blog.findById(blogId);
-    expect(updatedBlogFromDB.likes).toBe(100); // Verify likes in DB
+  test('POST /api/users fails with missing fields', async () => {
+    const invalidUser = {
+      username: 'testuser',
+    };
+
+    const response = await request(app)
+      .post('/api/users')
+      .send(invalidUser);
+
+    expect(response.status).toBe(400); // Check for bad request (400)
+    expect(response.body.error).toBe('Missing required fields');
+  });
+
+  test('GET /api/users lists all users', async () => {
+    // Create some users first (replace with your user creation logic)
+    const user1 = await new User({
+      username: 'user1',
+      password: 'password1',
+      name: 'User One',
+    }).save();
+
+    const user2 = await new User({
+      username: 'user2',
+      password: 'password2',
+      name: 'User Two',
+    }).save();
+
+    const response = await request(app)
+      .get('/api/users');
+
+    expect(response.status).toBe(200); // Check for successful response (200)
+    expect(response.body.length).toBe(2); // Verify two users returned
+    expect(response.body[0]).not.toHaveProperty('password'); // Ensure password is not sent
   });
 });

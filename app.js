@@ -1,53 +1,76 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
 
 const app = express();
 
 // Connect to MongoDB database (replace with your connection string)
 mongoose.connect('mongodb://localhost:27017/your-database-name');
 
-// Define blog schema with required title and url fields
-const blogSchema = new mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId, // Unique identifier
-  title: { type: String, required: true },
-  author: { type: String, required: true },
-  url: { type: String, required: true },
-  likes: { type: Number, default: 0 },
+// Define User Schema with username, hashed password, and name
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  name: { type: String, required: true },
 });
 
-const Blog = mongoose.model('Blog', blogSchema);
+// Hash password before saving a new user
+userSchema.pre('save', async function (next) {
+  const salt = await bcrypt.genSalt(10); // Generate salt
+  this.password = await bcrypt.hash(this.password, salt); // Hash password
+  next();
+});
 
-// POST route handler for adding blogs (replace with your existing handler)
-// ... (your existing POST route handler for adding blogs)
+const User = mongoose.model('User', userSchema);
 
-// DELETE route handler for deleting a blog (replace with your existing handler)
-// ... (your existing DELETE route handler for deleting a blog)
-
-// PUT route handler for updating a blog
-app.put('/api/blogs/:id', async (req, res) => {
+// POST route handler for creating users
+app.post('/api/users', async (req, res) => {
   try {
-    const blogId = req.params.id; // Get blog ID from URL parameter
-    const updatedBlog = req.body; // Get updated blog data from request body
+    const { username, password, name } = req.body; // Get user data from request
 
-    // Find the blog to update
-    const blogToUpdate = await Blog.findByIdAndUpdate(
-      blogId,
-      updatedBlog,
-      { new: true } // Return the updated document
-    );
-
-    if (!blogToUpdate) {
-      // Blog not found
-      res.status(404).json({ error: 'Blog not found' });
-      return;
+    // Check for required fields
+    if (!username || !password || !name) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    res.status(200).json(blogToUpdate); // Send the updated blog
+    // Check if username already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user and save
+    const newUser = new User({
+      username,
+      password: hashedPassword,
+      name,
+    });
+    await newUser.save();
+
+    res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to update blog' });
+    res.status(500).json({ error: 'Failed to create user' });
   }
 });
 
-// Start the server
+// GET route handler for listing users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find(); // Get all users
+    res.json(users.map(user => ({ // Return users without password
+      _id: user._id,
+      username: user.username,
+      name: user.name,
+    })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to get users' });
+  }
+});
+
+// Start the server (add your port number)
 app.listen(3000, () => console.log('Server listening on port 3000'));
