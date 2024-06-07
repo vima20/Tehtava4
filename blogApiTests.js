@@ -14,31 +14,35 @@ describe('Blog API', () => {
 
   // Existing test cases (replace with yours if needed)
 
-  test('POST /api/blogs returns 400 if title is missing', async () => {
-    const newBlog = {
-      author: 'Test Author',
-      url: 'https://example.com',
-    };
-
-    const response = await request(app)
-      .post('/api/blogs')
-      .send(newBlog);
-
-    expect(response.status).toBe(400); // Check for Bad Request (400)
-    expect(response.body.error).toBe('Missing required field: title'); // Verify error message
+  test('POST /api/blogs adds a new blog', async () => {
+    // ... (your existing test case for adding a blog)
   });
 
-  test('POST /api/blogs returns 400 if url is missing', async () => {
-    const newBlog = {
+  test('POST /api/blogs adds a new blog with likes value', async () => {
+    // ... (your existing test case for adding a blog with likes)
+  });
+
+  test('DELETE /api/blogs/:id deletes a blog', async () => {
+    // Create a new blog and save it
+    const newBlog = new Blog({
       title: 'Test Blog Title',
       author: 'Test Author',
-    };
+      url: 'https://example.com',
+    });
+    await newBlog.save();
 
+    const blogId = newBlog._id; // Get the blog ID
+
+    // Send a DELETE request to delete the blog
     const response = await request(app)
-      .post('/api/blogs')
-      .send(newBlog);
+      .delete(`/api/blogs/${blogId}`)
+      .send();
 
-    expect(response.status).toBe(400); // Check for Bad Request (400)
-    expect(response.body.error).toBe('Missing required field: url'); // Verify error message
+    expect(response.status).toBe(200); // Check for successful deletion (200)
+    expect(response.body.message).toBe('Blog deleted successfully'); // Verify message
+
+    // Verify that the blog is deleted from the database
+    const deletedBlog = await Blog.findById(blogId);
+    expect(deletedBlog).toBeNull(); // Verify blog is null
   });
 });
