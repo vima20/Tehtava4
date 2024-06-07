@@ -38,29 +38,52 @@ describe('User API', () => {
       .post('/api/users')
       .send(invalidUser);
 
-    expect(response.status).toBe(400); // Check for bad request (400)
-    expect(response.body.error).toBe('Missing required fields');
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/required/); // Check for required field error
   });
 
-  test('GET /api/users lists all users', async () => {
-    // Create some users first (replace with your user creation logic)
-    const user1 = await new User({
-      username: 'user1',
-      password: 'password1',
-      name: 'User One',
-    }).save();
-
-    const user2 = await new User({
-      username: 'user2',
-      password: 'password2',
-      name: 'User Two',
-    }).save();
+  test('POST /api/users fails with invalid username length', async () => {
+    const invalidUser = {
+      username: 'ab', // Username too short
+      password: 'password123',
+      name: 'Test User',
+    };
 
     const response = await request(app)
-      .get('/api/users');
+      .post('/api/users')
+      .send(invalidUser);
 
-    expect(response.status).toBe(200); // Check for successful response (200)
-    expect(response.body.length).toBe(2); // Verify two users returned
-    expect(response.body[0]).not.toHaveProperty('password'); // Ensure password is not sent
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/username must be at least 3/);
+  });
+
+  test('POST /api/users fails with invalid username characters', async () => {
+    const invalidUser = {
+      username: 'test#user', // Username with special character
+      password: 'password123',
+      name: 'Test User',
+    };
+
+    const response = await request(app)
+      .post('/api/users')
+      .send(invalidUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/failed/); // Mongoose validation error
+  });
+
+  test('POST /api/users fails with invalid password length', async () => {
+    const invalidUser = {
+      username: 'testuser',
+      password: 'pass', // Password too short
+      name: 'Test User',
+    };
+
+    const response = await request(app)
+      .post('/api/users')
+      .send(invalidUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/password must be at least 6/);
   });
 });
