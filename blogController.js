@@ -1,31 +1,32 @@
 const express = require('express');
 const Blog = require('../models/blog');
 const User = require('../models/user');
+const verifyToken = require('../middleware/auth'); // Lisää tämä rivi
 
-// ... (Other code)
+const router = express.Router();
 
-async function createBlog(req, res) {
-  const { title, content, authorId } = req.body; // Get blog data
-  const author = await User.findById(authorId); // Find author by ID
+// ... (Muu koodi)
 
-  if (!author) {
-    return res.status(400).json({ error: 'Invalid author ID' });
-  }
+// Esimerkki suojatusta reitistä
+router.get('/blogs', verifyToken, async (req, res) => {
+  // Hae kaikki blogit tietokannasta
+  const blogs = await Blog.find();
 
-  const newBlog = new Blog({
-    title,
-    content,
-    author: author._id, // Use author's ._id as reference
-    createdBy: req.userId, // Get the current user ID from the request context
-  });
-  await newBlog.save();
+  // Lisää blogien tekijöiden tiedot
+  const blogsWithAuthors = await Promise.all(blogs.map(async (blog) => {
+    const author = await User.findById(blog.author);
+    return {
+      ...blog._doc, // Kopioi blogiobjektin ominaisuudet
+      author: {
+        username: author.username,
+        name: author.name,
+      },
+    };
+  }));
 
-  res.status(201).json({ message: 'Blog created successfully' });
-}
+  res.status(200).json(blogsWithAuthors);
+});
 
-// ... (Other code)
+// ... (Muu koodi)
 
-module.exports = {
-  // ... (Other functions)
-  createBlog,
-};
+module.exports = router;
