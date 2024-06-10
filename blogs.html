@@ -1,0 +1,19 @@
+<table>
+    <thead>
+      <tr>
+        <th>Otsikko</th>
+        <th>Sisältö</th>
+        <th>Kirjoittaja</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for blog in blogs %}
+        <tr>
+          <td>{{ blog.title }}</td>
+          <td>{{ blog.content }}</td>
+          <td>{{ blog.createdBy.username }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  

@@ -1,0 +1,25 @@
+<table>
+    <thead>
+      <tr>
+        <th>Käyttäjätunnus</th>
+        <th>Nimi</th>
+        <th>Blogit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>{{ user.name }}</td>
+          <td>
+            <ul>
+              {% for blog in user.blogs.populate('createdBy', 'username') %}
+                <li>{{ blog.title }} (Kirjoittaja: {{ blog.createdBy.username }})</li>
+              {% endfor %}
+            </ul>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
