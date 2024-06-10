@@ -1,78 +1,114 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // Import JWT library
+const tokenExtractor = require('./middleware/tokenExtractor');
+const blogRoutes = require('./routes/blogRoutes'); 
+
+const User = require('./models/user');
+const Blog = require('./models/blog');
 
 const app = express();
+const port = process.env.PORT || 3000; // Use environment variable for port
+app.use(tokenExtractor);
+app.use('/blogs', blogRoutes);
 
 // Connect to MongoDB database (replace with your connection string)
 mongoose.connect('mongodb://localhost:27017/your-database-name');
 
-// Define User Schema with username, hashed password, and name
-const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    minlength: 3,
-    maxlength: 20,
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 6,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-});
+// Define JWT secret (replace with your secret key)
+const jwtSecret = 'YOUR_JWT_SECRET';
 
-// Hash password before saving a new user
-userSchema.pre('save', async function (next) {
-  const salt = await bcrypt.genSalt(10); // Generate salt
-  this.password = await bcrypt.hash(this.password, salt); // Hash password
-  next();
-});
-
-const User = mongoose.model('User', userSchema);
-
-// POST route handler for creating users
-app.post('/api/users', async (req, res) => {
+// Middleware to verify JWT token
+const verifyJWT = async (req, res, next) => {
   try {
-    const { username, password, name } = req.body; // Get user data
+    const token = req.headers.authorization.split(' ')[1]; // Extract token from header
+    const decodedToken = jwt.verify(token, jwtSecret); // Verify token
+    req.userId = decodedToken.userId; // Set user ID in request context
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
 
-    // Check for required fields (already done in schema validation)
+// User login endpoint
+app.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body; // Get login credentials
 
-    // Check if username already exists (already done in schema validation)
-
-    // Check password length (not done in schema validation)
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    const user = await User.findOne({ username }); // Find user by username
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    // Hash password (already done in schema pre-save hook)
+    const isPasswordValid = await bcrypt.compare(password, user.password); // Compare password
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
 
-    // Create new user and save
-    const newUser = new User({
-      username,
-      password, // Hashed password
-      name,
-    });
-    await newUser.save();
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, jwtSecret);
 
-    res.status(201).json({ message: 'User created successfully' });
+    res.json({ token });
   } catch (error) {
     console.error(error);
-    if (error.name === 'ValidationError') { // Handle validation errors
-      res.status(400).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Failed to create user' });
-    }
+    res.status(500).json({ error: 'Failed to login' });
   }
 });
 
-// GET route handler for listing users (already implemented)
-// ... (your existing GET /api/users route handler)
+// User creation endpoint (already implemented)
+// ... (your existing user creation route handler)
 
-// Start the server (add your port number)
-app.listen(3000, () => console.log('Server listening on port 3000'));
+// Blog creation endpoint with author information
+app.post('/blogs', verifyJWT, async (req, res) => {
+  try {
+    const { title, content, authorId } = req.body; // Get blog data
+    const author = await User.findById(authorId); // Find author by ID
+
+    if (!author) {
+      return res.status(400).json({ error: 'Invalid author ID' });
+    }
+
+    const newBlog = new Blog({
+      title,
+      content,
+      author: author._id, // Use author's ._id as reference
+    });
+    await newBlog.save();
+
+    res.status(201).json({ message: 'Blog created successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to create blog' });
+  }
+});
+
+// Get all blogs (populate author information)
+app.get('/blogs', async (req, res) => {
+  try {
+    const blogs = await Blog.find().populate('author', 'username name'); // Populate author details
+    res.json(blogs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to retrieve blogs' });
+  }
+});
+
+// Get a specific blog (populate author information)
+app.get('/blogs/:id', async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id).populate('author', 'username name'); // Populate author details
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+    res.json(blog);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to retrieve blog' });
+  }
+});
+
+// User list endpoint (show user's blogs)
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // Exclude password from user
