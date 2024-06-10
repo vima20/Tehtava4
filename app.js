@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // Import JWT library
 const tokenExtractor = require('./middleware/tokenExtractor');
+const userExtractor = require('./middleware/userExtractor');
 const blogRoutes = require('./routes/blogRoutes'); 
 
 const User = require('./models/user');
@@ -12,6 +13,7 @@ const app = express();
 const port = process.env.PORT || 3000; // Use environment variable for port
 app.use(tokenExtractor);
 app.use('/blogs', blogRoutes);
+app.use(userExtractor)
 
 // Connect to MongoDB database (replace with your connection string)
 mongoose.connect('mongodb://localhost:27017/your-database-name');
