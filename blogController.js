@@ -8,23 +8,24 @@ const router = express.Router();
 // ... (Muu koodi)
 
 // Esimerkki suojatusta reitistä
-router.get('/blogs', verifyToken, async (req, res) => {
-  // Hae kaikki blogit tietokannasta
-  const blogs = await Blog.find();
+router.post('/blogs', verifyToken, async (req, res) => {
+  const { title, content } = req.body; // Get blog data
 
-  // Lisää blogien tekijöiden tiedot
-  const blogsWithAuthors = await Promise.all(blogs.map(async (blog) => {
-    const author = await User.findById(blog.author);
-    return {
-      ...blog._doc, // Kopioi blogiobjektin ominaisuudet
-      author: {
-        username: author.username,
-        name: author.name,
-      },
-    };
-  }));
+  // Tarkista token ja hae käyttäjän ID
+  const authorId = req.userId;
+  if (!authorId) {
+    return res.status(400).json({ error: 'Invalid author ID' });
+  }
 
-  res.status(200).json(blogsWithAuthors);
+  const newBlog = new Blog({
+    title,
+    content,
+    author: authorId, // Use author's ._id as reference
+    createdBy: req.userId, // Get the current user ID from the request context
+  });
+  await newBlog.save();
+
+  res.status(201).json({ message: 'Blog created successfully' });
 });
 
 // ... (Muu koodi)
